@@ -1,5 +1,6 @@
 package ru.catr.game.sapper.controller;
 
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,10 @@ import ru.catr.game.sapper.service.newgame.NewGameRequestValidator;
 import java.util.Optional;
 
 @Component
+@AllArgsConstructor
 public class NewApiDelegateImpl implements NewApiDelegate {
+
+    private NewGameRequestValidator validator;
 
     @Override
     public Optional<NativeWebRequest> getRequest() {
@@ -21,7 +25,7 @@ public class NewApiDelegateImpl implements NewApiDelegate {
 
     @Override
     public ResponseEntity<GameInfoResponse> newPost(NewGameRequest newGameRequest) {
-        NewGameRequestValidator.validateRequest(newGameRequest); // TODO можно переделать на автоматическую валидацию через аннотации в dto
+        validator.validateRequest(newGameRequest); // TODO можно переделать на автоматическую валидацию через аннотации в dto
         GameInfoResponse response = createResponse(newGameRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

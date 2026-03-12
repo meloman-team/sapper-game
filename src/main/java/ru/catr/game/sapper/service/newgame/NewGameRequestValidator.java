@@ -1,24 +1,30 @@
 package ru.catr.game.sapper.service.newgame;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import ru.catr.game.sapper.config.prop.ValidateFieldConfig;
 import ru.catr.game.sapper.model.NewGameRequest;
 
+/**
+ * Валидатор запроса на создание новой игры
+ */
 @Component
+@AllArgsConstructor
 public class NewGameRequestValidator {
 
+    private ValidateFieldConfig config;
+
     /**
-     * Каждая игра начинается с вызова метода POST /new с указанием размера игрового поля width и height, а также количества мин mines_count на нём.
-     * Для тестовой реализации ограничиваемся разумными размерами игрового поля:
-     * ширина и высота не менее 2 и не более 50, количество мин не более width * height - 1 (всегда должна быть хотя бы одна свободная ячейка).
+     * Валидируем количество мин и размеры игрового поля
      */
-    public static void validateRequest(NewGameRequest newGameRequest) {
+    public void validateRequest(NewGameRequest newGameRequest) {
         validateHeight(newGameRequest);
         validateWidth(newGameRequest);
         validateMinesCount(newGameRequest);
     }
 
-    private static void validateMinesCount(NewGameRequest newGameRequest) {
-        int validMinMinesCount = 0; // TODO вынести константы валидаций в конфигурацию или енам
+    private void validateMinesCount(NewGameRequest newGameRequest) {
+        var validMinMinesCount = config.minMinesCount();
 
         var height = newGameRequest.getHeight();
         var width = newGameRequest.getWidth();
@@ -26,15 +32,14 @@ public class NewGameRequestValidator {
 
         var minesCount = newGameRequest.getMinesCount();
 
-        // TODO Уточнить требования по минимальному количеству мин.
         if(minesCount < validMinMinesCount && minesCount > validMinesCount) {
             throw new IllegalArgumentException(String.format("Количество мин должно быть в диапазоне от %d, до %d. Текущее количество: %d", validMinMinesCount, validMinesCount, minesCount));
         }
     }
 
-    private static void validateHeight(NewGameRequest newGameRequest) {
-        int validMinHeight = 2; // TODO вынести константы валидаций в конфигурацию или енам
-        int validMaxHeight = 50;
+    private void validateHeight(NewGameRequest newGameRequest) {
+        var validMinHeight = config.minHeight();
+        var validMaxHeight = config.maxHeight();
 
         var height = newGameRequest.getHeight();
         var heightErrorMassage = String.format("Высота должна быть в диапазоне от %d, до %d. Текущая высота: %d", validMinHeight, validMaxHeight, height);
@@ -42,9 +47,9 @@ public class NewGameRequestValidator {
         validateSize(height, validMinHeight, validMaxHeight, heightErrorMassage);
     }
 
-    private static void validateWidth(NewGameRequest newGameRequest) {
-        int validMinWidth = 2; // TODO вынести константы валидаций в конфигурацию или енам
-        int validMaxWidth = 50;
+    private void validateWidth(NewGameRequest newGameRequest) {
+        var validMinWidth = config.minWidth();
+        var validMaxWidth = config.maxWidth();
 
         var width = newGameRequest.getWidth();
         var heightErrorMassage = String.format("Ширина должна быть в диапазоне от %d, до %d. Текущая ширина: %d", validMinWidth, validMaxWidth, width);
@@ -53,12 +58,14 @@ public class NewGameRequestValidator {
     }
 
     /**
+     * Валидация размеров
+     *
      * @param current текущий размер
      * @param min минимальный допустимый размер
      * @param max максимальный допустимый размер
      * @param errorMassage Сообщение об ошибке для пользователя
      */
-    private static void validateSize(int current, int min, int max, String errorMassage) {
+    private void validateSize(int current, int min, int max, String errorMassage) {
         if(current < min || current > max) {
             throw new IllegalArgumentException(errorMassage);
         }
