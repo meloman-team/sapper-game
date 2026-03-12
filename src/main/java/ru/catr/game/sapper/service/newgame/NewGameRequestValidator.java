@@ -32,7 +32,7 @@ public class NewGameRequestValidator {
 
         var minesCount = newGameRequest.getMinesCount();
 
-        if(minesCount < validMinMinesCount && minesCount > validMinesCount) {
+        if(minesCount < validMinMinesCount || minesCount > validMinesCount) {
             throw new IllegalArgumentException(String.format("Количество мин должно быть в диапазоне от %d, до %d. Текущее количество: %d", validMinMinesCount, validMinesCount, minesCount));
         }
     }
