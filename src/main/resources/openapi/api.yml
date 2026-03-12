@@ -1,0 +1,202 @@
+openapi: "3.0.2"
+info:
+  title: Сапёр
+  description: >-
+    Спецификация АПИ <a href="/">игры Сапёр</a>.<br /><br />
+    Каждая игра начинается с вызова метода `POST /new` с указанием размера игрового поля <code>width</code> и <code>height</code>, а также количества мин <code>mines_count</code> на нём.
+    Для тестовой реализации ограничиваемся разумными размерами игрового поля: ширина и высота не менее 2 и не более 50, количество мин не более <code>width * height - 1</code> (всегда должна быть хотя бы одна свободная ячейка).<br /><br />
+    Далее игроку предлагается в созданной игре (идентификация игры по полученному в ответ <code>game_id</code>) делать ходы методом `POST /turn`, указывая координаты ячейки, которую игрок хочет открыть.
+    В запросе <code>row</code> - номер ряда, начиная с нуля, и <code>col</code> - номер колонки, начиная с нуля.<br /><br />
+    В ответ на оба метода приходят данные о самой игре:
+    уникальный идентификатор игры <code>game_id</code>,
+    размеры поля `width` и `height` и количество мин `mines_count`, указанные при создании игры,
+    а также параметр <code>completed</code>, указывающий, завершена ли текущая игра.
+    Данные об игровом поле <code>field</code> возвращаются в виде двумерного массива символов (<code>height</code> строк, в каждой по <code>width</code> элементов).
+    Игровое поле состоит из следующих символов:
+    пустые строки <code>" "</code> (пробелы) означают неоткрытые ячейки поля,
+    поля с цифрами от <code>"0"</code> до <code>"8"</code> означают открытые ячейки, где цифры указывают, сколько мин расположено в непосредственной близости от текущей ячейки.<br /><br />
+    Игра завершается (возвращается `completed: true`) в одном из двух случаев:
+     - <b>Победа:</b><br />
+      пользователь открыл все ячейки, не занятые минами;<br />
+      все ячейки с минами отмечаются символами "открытых" мин <code>"M"</code> (латинская заглавная "эм").
+     - <b>Проигрыш:</b><br />
+      пользователь указал на ячейку, где была установлена мина;<br />
+      все ячейки с минами при этом отмечаются символом "взорванной" мины <code>"X"</code> (латинская заглавная "икс");<br />
+      а также должно полностью открыться игровое поле: в ячейках без мин должно отображаться количество мин рядом с ними.
+    
+    Если в процессе игры пользователь открывает ячейку, рядом с которой нет ни одной мины (то есть ячейка со значением <code>"0"</code>), должны рекурсивно "открыться" все смежные ячейки, рядом с которыми также нет ни одной мины, а также все смежные с ними "числовые" ячейки, рядом с которыми мины есть, с указанием их количества. Фактически открывается область смежных "нулевых" ячеек с "числовыми" границами.<br /><br />
+    Не допускается после завершения игры делать новые ходы, а также повторно проверять уже проверенную ячейку. Эти, а также иные ошибочные ситуации, такие, как неуспешная проверка корректности входных данных, должны возвращать ошибку с кодом <code>400 Bad Request</code> с текстовым описание ошибки в <code>error</code>.
+    Формат ошибки - человекочитаемый текст, именно он будет отображаться в интерфейсе.<br /><br />
+    <b>Важно!</b><br />Фронтенд самостоятельно не реализует никакую дополнительную логику, а лишь отображает то, что ему предоставляет бэкенд. Фронтенд осуществляет лишь формальную проверку полученных от бэкенда данных:
+     - наличие только допустимых символов в описании игрового поля (пробел `" "`, строки с цифрами от `"0"` до `"8"`, а также открытые `"M"` или взорванные `"X"` мины)
+     - невозможность отображения на игровом поле `"X"` или `"M"` для незавершённой игры (`completed: false`)
+     - невозможность одновременного отображения `"X"` и `"M"` или же отсутствие этих символов, а также отображение неоткрытых ячеек `" "` для завершённой игры (`completed: true`)
+    
+    То есть, если передать в ячейке игрового поля <code>"M"</code> или <code>"X"</code>, но при этом не сообщать об окончании игры (`completed: false`), то на поле действительно отобразится "открытая" или "взорванная" мина. Фронтенд игру при этом не остановит, появится лишь предупреждение.
+    Или же, если было указано, что игра была закончена (`completed: true`), фронтенд не будет ограничивать последующие нажатия на поле в интерфейсе, бэкенд должен сам возвращать ошибку при попытке дальнейших действий в уже завершённой игре. Именно бэкенд указывает фронтенду, что именно и как отображать на игровом поле.
+  version: "1.0"
+servers:
+  - url: /api
+    description: АПИ игры Сапёр
+paths:
+  /new:
+    post:
+      tags:
+        - Minesweeper
+      description: Начало новой игры
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewGameRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameInfoResponse"
+        "400":
+          description: Ошибка в запросе или некорректное действие
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "количество мин должно быть меньше количества ячеек"
+        "500":
+          description: Непредвиденная внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /turn:
+    post:
+      tags:
+        - Minesweeper
+      description: Ход пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameTurnRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameInfoResponse"
+        "400":
+          description: Ошибка в запросе или некорректное действие
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "нельзя открыть уже открытую ячейку"
+        "500":
+          description: Непредвиденная внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    NewGameRequest:
+      required:
+        - width
+        - height
+        - mines_count
+      properties:
+        width:
+          type: integer
+          description: Ширина игрового поля
+          example: 10
+        height:
+          type: integer
+          description: Высота игрового поля
+          example: 10
+        mines_count:
+          type: integer
+          description: Количество мин на поле
+          example: 10
+    GameTurnRequest:
+      required:
+        - game_id
+        - col
+        - row
+      properties:
+        game_id:
+          type: string
+          description: Идентификатор игры
+          format: uuid
+          example: 01234567-89ab-cdef-0123-456789abcdef
+        col:
+          type: integer
+          description: Колонка проверяемой ячейки (нумерация с нуля)
+          example: 5
+        row:
+          type: integer
+          description: Ряд проверяемой ячейки (нумерация с нуля)
+          example: 5
+    GameInfoResponse:
+      required:
+        - game_id
+        - width
+        - height
+        - mines_count
+        - field
+        - completed
+      properties:
+        game_id:
+          type: string
+          description: Уникальный идентификатор игры в формате UUID v4
+          format: uuid
+          example: 01234567-89ab-cdef-0123-456789abcdef
+        width:
+          type: integer
+          description: Ширина игрового поля
+          example: 10
+        height:
+          type: integer
+          description: Высота игрового поля
+          example: 10
+        mines_count:
+          type: integer
+          description: Количество мин на поле
+          example: 10
+        completed:
+          type: boolean
+          description: Завершена ли игра
+          example: false
+        field:
+          type: array
+          description: Строки минного поля (количество равно высоте height)
+          nullable: false
+          items:
+            type: array
+            description: Столбцы минного поля (количество равно ширине width)
+            nullable: false
+            items:
+              type: string
+              enum:
+                - " "
+                - "0"
+                - "1"
+                - "2"
+                - "3"
+                - "4"
+                - "5"
+                - "6"
+                - "7"
+                - "8"
+                - "M"
+                - "X"
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Описание ошибки
+          example: "произошла непредвиденная ошибка"
