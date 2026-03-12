@@ -1,3 +1,11 @@
 spring:
   application:
     name: sapper-game
+
+logging:
+  level:
+    org.zalando.logbook: TRACE
+
+logbook:
+  include:
+    - /api/**
