@@ -23,3 +23,11 @@ game:
     min-width: 2
     # максимальная ширина поля
     max-width: 50
+
+springdoc:
+  swagger-ui:
+    # Путь к вашему файлу относительно папки static/public
+    # Положите api.yml в src/main/resources/static/api.yml
+    url: /api.yml
+#  api-docs:
+#    enabled: true
