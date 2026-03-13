@@ -1,5 +1,7 @@
 package ru.catr.game.sapper.service.newgame;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.catr.game.sapper.config.prop.ValidateFieldConfig;
@@ -17,13 +19,14 @@ public class NewGameRequestValidator {
     /**
      * Валидируем количество мин и размеры игрового поля
      */
-    public void validateRequest(NewGameRequest newGameRequest) {
+    public void validateRequest(@Nullable NewGameRequest newGameRequest) {
+        if (newGameRequest == null) throw new IllegalArgumentException("Запрос не должен быть null");
         validateHeight(newGameRequest);
         validateWidth(newGameRequest);
         validateMinesCount(newGameRequest);
     }
 
-    private void validateMinesCount(NewGameRequest newGameRequest) {
+    private void validateMinesCount(@NotNull NewGameRequest newGameRequest) {
         var validMinMinesCount = config.minMinesCount();
 
         var height = newGameRequest.getHeight();
@@ -37,7 +40,7 @@ public class NewGameRequestValidator {
         }
     }
 
-    private void validateHeight(NewGameRequest newGameRequest) {
+    private void validateHeight(@NotNull NewGameRequest newGameRequest) {
         var validMinHeight = config.minHeight();
         var validMaxHeight = config.maxHeight();
 
@@ -47,7 +50,7 @@ public class NewGameRequestValidator {
         validateSize(height, validMinHeight, validMaxHeight, heightErrorMassage);
     }
 
-    private void validateWidth(NewGameRequest newGameRequest) {
+    private void validateWidth(@NotNull NewGameRequest newGameRequest) {
         var validMinWidth = config.minWidth();
         var validMaxWidth = config.maxWidth();
 

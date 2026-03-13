@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.catr.game.sapper.model.CellState;
+import ru.catr.game.sapper.model.GameInfo;
 import ru.catr.game.sapper.model.GameInfoResponse;
 import ru.catr.game.sapper.model.NewGameRequest;
 import ru.catr.game.sapper.repository.GameRepository;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Логика сервиса
+ * Сервис отвечает за создание новой игры и генерацию игрового поля
  */
 @Service
 @AllArgsConstructor
@@ -28,11 +29,12 @@ public class NewGameService {
     /**
      * Создает и сохраняет новое игровое поле, затем формирует ответ для пользователя.
      */
-    public GameInfoResponse createFieldAndResponse(@NotNull NewGameRequest newGameRequest) {
+    public GameInfoResponse createFieldAndResponse(@NotNull NewGameRequest request) {
         UUID gameId = UUID.randomUUID();
-        List<List<CellState>> internalStateField = generateInternalField(newGameRequest);
-        gameRepository.save(gameId, internalStateField);
-        return buildResponse(newGameRequest, gameId);
+        List<List<CellState>> internalStateField = generateInternalField(request);
+        GameInfo gameInfo = new GameInfo(gameId, request.getWidth(), request.getHeight(), request.getMinesCount(), internalStateField);
+        gameRepository.save(gameInfo);
+        return buildResponse(request, gameId);
     }
 
     private GameInfoResponse buildResponse(NewGameRequest request, UUID gameId) {

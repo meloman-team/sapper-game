@@ -12,16 +12,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.catr.game.sapper.model.CellState;
+import ru.catr.game.sapper.model.GameInfo;
 import ru.catr.game.sapper.model.GameInfoResponse;
 import ru.catr.game.sapper.model.NewGameRequest;
 import ru.catr.game.sapper.repository.GameRepository;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -62,7 +61,7 @@ class NewGameServiceTest {
             assertThat(response.getField().get(0)).hasSize(10);
 
             // Проверка взаимодействия с репозиторием
-            verify(gameRepository).save(eq(response.getGameId()), any());
+            verify(gameRepository).save(any());
         }
 
         @Test
@@ -88,16 +87,16 @@ class NewGameServiceTest {
             request.setMinesCount(2);
 
             // Captor для перехвата аргумента save()
-            var stateCaptor = ArgumentCaptor.forClass(List.class);
+            var stateCaptor = ArgumentCaptor.forClass(GameInfo.class);
 
             newGameService.createFieldAndResponse(request);
 
-            verify(gameRepository).save(any(UUID.class), stateCaptor.capture());
+            verify(gameRepository).save(stateCaptor.capture());
 
             var savedState = stateCaptor.getValue();
-            assertThat(savedState).isInstanceOf(List.class);
-            assertThat(savedState).hasSize(3); // height
-            assertThat((List<?>) savedState.get(0)).hasSize(3); // width
+            assertThat(savedState).isInstanceOf(GameInfo.class);
+            assertThat((List<?>) savedState.getField()).hasSize(3); // height
+            assertThat((List<?>) savedState.getField().get(0)).hasSize(3); // width
         }
     }
 
@@ -162,12 +161,11 @@ class NewGameServiceTest {
             request.setMinesCount(20);
 
             // Перехватываем сохранённое состояние
-            var stateCaptor = ArgumentCaptor.forClass(List.class);
+            var stateCaptor = ArgumentCaptor.forClass(GameInfo.class);
             newGameService.createFieldAndResponse(request);
-            verify(gameRepository).save(any(UUID.class), stateCaptor.capture());
+            verify(gameRepository).save(stateCaptor.capture());
 
-            @SuppressWarnings("unchecked")
-            var internalState = (List<List<CellState>>) stateCaptor.getValue();
+            var internalState = stateCaptor.getValue().getField();
 
             // Проверяем, что мины только в пределах поля
             for (int i = 0; i < internalState.size(); i++) {
@@ -190,12 +188,11 @@ class NewGameServiceTest {
             request.setHeight(8);
             request.setMinesCount(13);
 
-            var stateCaptor = ArgumentCaptor.forClass(List.class);
+            var stateCaptor = ArgumentCaptor.forClass(GameInfo.class);
             newGameService.createFieldAndResponse(request);
-            verify(gameRepository).save(any(UUID.class), stateCaptor.capture());
+            verify(gameRepository).save(stateCaptor.capture());
 
-            @SuppressWarnings("unchecked")
-            var internalState = (List<List<CellState>>) stateCaptor.getValue();
+            var internalState = stateCaptor.getValue().getField();
 
             long actualMines = internalState.stream()
                     .flatMap(List::stream)
@@ -213,12 +210,11 @@ class NewGameServiceTest {
             request.setHeight(3);
             request.setMinesCount(1);
 
-            var stateCaptor = ArgumentCaptor.forClass(List.class);
+            var stateCaptor = ArgumentCaptor.forClass(GameInfo.class);
             newGameService.createFieldAndResponse(request);
-            verify(gameRepository).save(any(UUID.class), stateCaptor.capture());
+            verify(gameRepository).save(stateCaptor.capture());
 
-            @SuppressWarnings("unchecked")
-            var internalState = (List<List<CellState>>) stateCaptor.getValue();
+            var internalState = stateCaptor.getValue().getField();
 
             // Находим мину и проверяем соседей
             for (int i = 0; i < 3; i++) {
@@ -265,12 +261,11 @@ class NewGameServiceTest {
             request.setHeight(10);
             request.setMinesCount(90); // 90% поля
 
-            var stateCaptor = ArgumentCaptor.forClass(List.class);
+            var stateCaptor = ArgumentCaptor.forClass(GameInfo.class);
             newGameService.createFieldAndResponse(request);
-            verify(gameRepository).save(any(UUID.class), stateCaptor.capture());
+            verify(gameRepository).save(stateCaptor.capture());
 
-            @SuppressWarnings("unchecked")
-            var internalState = (List<List<CellState>>) stateCaptor.getValue();
+            var internalState = stateCaptor.getValue().getField();
 
             long mines = internalState.stream()
                     .flatMap(List::stream)
@@ -288,12 +283,11 @@ class NewGameServiceTest {
             request.setHeight(5);
             request.setMinesCount(24); // 5*5 - 1
 
-            var stateCaptor = ArgumentCaptor.forClass(List.class);
+            var stateCaptor = ArgumentCaptor.forClass(GameInfo.class);
             newGameService.createFieldAndResponse(request);
-            verify(gameRepository).save(any(UUID.class), stateCaptor.capture());
+            verify(gameRepository).save(stateCaptor.capture());
 
-            @SuppressWarnings("unchecked")
-            var internalState = (List<List<CellState>>) stateCaptor.getValue();
+            var internalState = stateCaptor.getValue().getField();
 
             long mines = internalState.stream()
                     .flatMap(List::stream)

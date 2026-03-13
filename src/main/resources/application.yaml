@@ -5,6 +5,7 @@ spring:
 logging:
   level:
     org.zalando.logbook: TRACE
+    ru.catr.game.sapper.service.turn: DEBUG
 
 logbook:
   include:

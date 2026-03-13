@@ -3,10 +3,8 @@ package ru.catr.game.sapper.repository;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Component;
-import ru.catr.game.sapper.model.CellState;
+import ru.catr.game.sapper.model.GameInfo;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -16,19 +14,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameRepository {
 
     // TODO подумать над ограничением количества игр
-    private final Map<UUID, List<List<CellState>>> gameStorage = new ConcurrentHashMap<>();
+    private final Map<UUID, GameInfo> gameStorage = new ConcurrentHashMap<>();
 
-    public void save(@NotNull UUID gameId, @NotNull List<List<CellState>> internalStateField) {
-        validateGameId(gameId);
-        validateStateField(internalStateField);
-
-        gameStorage.put(gameId, createDeepCopy(internalStateField));
+    public void save(@NotNull GameInfo gameInfo) {
+        validateGameInfo(gameInfo);
+        gameStorage.put(gameInfo.getGameId(), new GameInfo(gameInfo));
     }
 
     @Nullable
-    public List<List<CellState>> findById(@NotNull UUID gameId) {
+    public GameInfo findById(@NotNull UUID gameId) {
         validateGameId(gameId);
-        return createDeepCopy(gameStorage.get(gameId));
+        return new GameInfo(gameStorage.get(gameId));
     }
 
     public void deleteById(@NotNull UUID gameId) {
@@ -40,24 +36,10 @@ public class GameRepository {
         Objects.requireNonNull(gameId, "Идентификатор игры не должен быть null");
     }
 
-    private void validateStateField(List<List<CellState>> internalStateField) {
-        Objects.requireNonNull(internalStateField, "Игровое поле не должно быть null");
-    }
-
-    private List<List<CellState>> createDeepCopy(List<List<CellState>> original) {
-        if (original == null) {
-            return null;
-        }
-
-        List<List<CellState>> copy = new ArrayList<>(original.size());
-        for (List<CellState> row : original) {
-            List<CellState> rowCopy = new ArrayList<>(row.size());
-            for (CellState cell : row) {
-                rowCopy.add(new CellState(cell));
-            }
-            copy.add(rowCopy);
-        }
-        return copy;
+    private void validateGameInfo(GameInfo gameInfo) {
+        Objects.requireNonNull(gameInfo, "Идентификатор игры не должен быть null");
+        Objects.requireNonNull(gameInfo.getGameId(), "Идентификатор игры не должен быть null");
+        Objects.requireNonNull(gameInfo.getField(), "Игровое поле не должно быть null");
     }
 
 }
