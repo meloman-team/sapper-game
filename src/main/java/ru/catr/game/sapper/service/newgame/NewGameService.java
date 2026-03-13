@@ -1,5 +1,6 @@
 package ru.catr.game.sapper.service.newgame;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.catr.game.sapper.model.CellState;
@@ -27,7 +28,7 @@ public class NewGameService {
     /**
      * Создает и сохраняет новое игровое поле, затем формирует ответ для пользователя.
      */
-    public GameInfoResponse createFieldAndResponse(NewGameRequest newGameRequest) {
+    public GameInfoResponse createFieldAndResponse(@NotNull NewGameRequest newGameRequest) {
         UUID gameId = UUID.randomUUID();
         List<List<CellState>> internalStateField = generateInternalField(newGameRequest);
         gameRepository.save(gameId, internalStateField);

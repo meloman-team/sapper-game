@@ -12,4 +12,10 @@ public class CellState {
     private boolean hasMine = false;
     private boolean opened = false;
     private int adjacentMines = 0;
+
+    public CellState(CellState other) {
+        this.hasMine = other.hasMine;
+        this.opened = other.opened;
+        this.adjacentMines = other.adjacentMines;
+    }
 }
