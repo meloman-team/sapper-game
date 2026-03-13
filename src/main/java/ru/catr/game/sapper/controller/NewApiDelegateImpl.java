@@ -9,6 +9,7 @@ import ru.catr.game.sapper.api.NewApiDelegate;
 import ru.catr.game.sapper.model.GameInfoResponse;
 import ru.catr.game.sapper.model.NewGameRequest;
 import ru.catr.game.sapper.service.newgame.NewGameRequestValidator;
+import ru.catr.game.sapper.service.newgame.NewGameService;
 
 import java.util.Optional;
 
@@ -17,6 +18,7 @@ import java.util.Optional;
 public class NewApiDelegateImpl implements NewApiDelegate {
 
     private NewGameRequestValidator validator;
+    private NewGameService service;
 
     @Override
     public Optional<NativeWebRequest> getRequest() {
@@ -26,13 +28,8 @@ public class NewApiDelegateImpl implements NewApiDelegate {
     @Override
     public ResponseEntity<GameInfoResponse> newPost(NewGameRequest newGameRequest) {
         validator.validateRequest(newGameRequest); // TODO можно переделать на автоматическую валидацию через аннотации в dto
-        GameInfoResponse response = createResponse(newGameRequest);
+        GameInfoResponse response = service.createFieldAndResponse(newGameRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    private GameInfoResponse createResponse(NewGameRequest newGameRequest) {
-        // FIXME
-        return null;
     }
 
 }
