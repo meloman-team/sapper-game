@@ -172,7 +172,7 @@ class NewGameServiceTest {
                 for (int j = 0; j < internalState.get(i).size(); j++) {
                     var cell = internalState.get(i).get(j);
                     // Если ячейка — мина, проверяем, что она валидна
-                    if (cell.isHasMine()) {
+                    if (cell.isMined()) {
                         assertThat(i).isBetween(0, 9);
                         assertThat(j).isBetween(0, 9);
                     }
@@ -196,7 +196,7 @@ class NewGameServiceTest {
 
             long actualMines = internalState.stream()
                     .flatMap(List::stream)
-                    .filter(CellState::isHasMine)
+                    .filter(CellState::isMined)
                     .count();
 
             assertThat(actualMines).isEqualTo(13);
@@ -220,7 +220,7 @@ class NewGameServiceTest {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     var cell = internalState.get(i).get(j);
-                    if (cell.isHasMine()) {
+                    if (cell.isMined()) {
                         // Мина должна иметь adjacentMines = 0 (не считается для себя)
                         assertThat(cell.getAdjacentMines()).isEqualTo(0);
                     } else {
@@ -240,7 +240,7 @@ class NewGameServiceTest {
             for (int d = 0; d < 8; d++) {
                 int ni = row + dx[d], nj = col + dy[d];
                 if (ni >= 0 && ni < field.size() && nj >= 0 && nj < field.get(0).size()) {
-                    if (field.get(ni).get(nj).isHasMine()) {
+                    if (field.get(ni).get(nj).isMined()) {
                         return true;
                     }
                 }
@@ -269,7 +269,7 @@ class NewGameServiceTest {
 
             long mines = internalState.stream()
                     .flatMap(List::stream)
-                    .filter(CellState::isHasMine)
+                    .filter(CellState::isMined)
                     .count();
 
             assertThat(mines).isEqualTo(90);
@@ -291,11 +291,11 @@ class NewGameServiceTest {
 
             long mines = internalState.stream()
                     .flatMap(List::stream)
-                    .filter(CellState::isHasMine)
+                    .filter(CellState::isMined)
                     .count();
             long safe = internalState.stream()
                     .flatMap(List::stream)
-                    .filter(cell -> !cell.isHasMine())
+                    .filter(cell -> !cell.isMined())
                     .count();
 
             assertThat(mines).isEqualTo(24);

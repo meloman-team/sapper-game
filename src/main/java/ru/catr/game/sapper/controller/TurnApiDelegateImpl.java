@@ -14,8 +14,8 @@ import ru.catr.game.sapper.service.turn.TurnRequestValidator;
 @AllArgsConstructor
 public class TurnApiDelegateImpl implements TurnApiDelegate {
 
-    private TurnRequestValidator validator;
-    private TurnGameService service;
+    private final TurnRequestValidator validator;
+    private final TurnGameService service;
 
     @Override
     public ResponseEntity<GameInfoResponse> turnPost(GameTurnRequest gameTurnRequest) {

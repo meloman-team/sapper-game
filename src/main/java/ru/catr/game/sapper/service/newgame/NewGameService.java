@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 @AllArgsConstructor
 public class NewGameService {
 
-    private GameRepository gameRepository;
+    private final GameRepository gameRepository;
 
     /**
      * Создает и сохраняет новое игровое поле, затем формирует ответ для пользователя.
@@ -100,7 +100,7 @@ public class NewGameService {
                 for (int j = 0; j < width; j++) {
                     int index = i * width + j;
                     if (!safeIdx.contains(index)) {
-                        field.get(i).get(j).setHasMine(true);
+                        field.get(i).get(j).setMined(true);
                     }
                 }
             }
@@ -115,7 +115,7 @@ public class NewGameService {
             for (int index : mineIdx) {
                 int row = index / width;
                 int col = index % width;
-                field.get(row).get(col).setHasMine(true);
+                field.get(row).get(col).setMined(true);
             }
         }
     }
@@ -131,14 +131,14 @@ public class NewGameService {
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 CellState cell = field.get(i).get(j);
-                if (cell.isHasMine()) continue;
+                if (cell.isMined()) continue;
 
                 int count = 0;
                 for (int d = 0; d < 8; d++) {
                     int ni = i + dx[d];
                     int nj = j + dy[d];
                     if (ni >= 0 && ni < height && nj >= 0 && nj < width) {
-                        if (field.get(ni).get(nj).isHasMine()) {
+                        if (field.get(ni).get(nj).isMined()) {
                             count++;
                         }
                     }

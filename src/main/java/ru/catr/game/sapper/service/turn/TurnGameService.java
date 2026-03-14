@@ -21,8 +21,8 @@ import static ru.catr.game.sapper.model.GameInfoResponse.FieldEnum;
 @AllArgsConstructor
 public class TurnGameService {
 
-    private GameRepository gameRepository;
-    private TurnRequestValidator validator;
+    private final GameRepository gameRepository;
+    private final TurnRequestValidator validator;
 
     public GameInfoResponse turn(@NotNull GameTurnRequest request) {
         boolean completed = false;
@@ -56,7 +56,7 @@ public class TurnGameService {
      */
     private boolean openCell(@NotNull List<List<CellState>> internalStateField, int row, int col) {
         CellState cell = internalStateField.get(row).get(col);
-        if (cell.isHasMine()) {
+        if (cell.isMined()) {
             cell.setOpened(true);
             return true;
         }
@@ -74,7 +74,7 @@ public class TurnGameService {
         if (row < 0 || row >= height || col < 0 || col >= width) return;
 
         CellState cell = field.get(row).get(col);
-        if (cell.isOpened() || cell.isHasMine()) return;
+        if (cell.isOpened() || cell.isMined()) return;
 
         cell.setOpened(true);
 
@@ -93,7 +93,7 @@ public class TurnGameService {
     private boolean checkWin(@NotNull List<List<CellState>> field) {
         for (var row : field) {
             for (var cell : row) {
-                if (!cell.isHasMine() && !cell.isOpened()) {
+                if (!cell.isMined() && !cell.isOpened()) {
                     return false;
                 }
             }
@@ -139,12 +139,12 @@ public class TurnGameService {
 
     private FieldEnum toFieldEnum(CellState cell, boolean gameCompleted, boolean isLoss) {
         if (!cell.isOpened()) {
-            if (gameCompleted && cell.isHasMine()) {
+            if (gameCompleted && cell.isMined()) {
                 return isLoss ? FieldEnum.X : FieldEnum.M;
             }
             return FieldEnum.SPACE;
         }
-        if (cell.isHasMine()) {
+        if (cell.isMined()) {
             return isLoss ? FieldEnum.X : FieldEnum.M;
         }
         return switch (cell.getAdjacentMines()) {
@@ -161,7 +161,7 @@ public class TurnGameService {
         };
     }
 
-    public void logInternalGameField(List<List<CellState>> field) {
+    private void logInternalGameField(List<List<CellState>> field) {
         for (int i = 0; i < field.size(); i++) {
             String rowString = field.get(i).stream()
                     .map(CellState::toString)

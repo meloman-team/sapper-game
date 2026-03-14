@@ -14,7 +14,7 @@ import ru.catr.game.sapper.model.NewGameRequest;
 @AllArgsConstructor
 public class NewGameRequestValidator {
 
-    private ValidateFieldConfig config;
+    private final ValidateFieldConfig config;
 
     /**
      * Валидируем количество мин и размеры игрового поля

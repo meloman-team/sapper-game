@@ -9,12 +9,21 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class CellState {
-    private boolean hasMine = false;
+    /**
+     * заминированный
+     */
+    private boolean mined = false;
+    /**
+     * открытый
+     */
     private boolean opened = false;
+    /**
+     * Количество мин в соседних ячейках
+     */
     private int adjacentMines = 0;
 
     public CellState(CellState other) {
-        this.hasMine = other.hasMine;
+        this.mined = other.mined;
         this.opened = other.opened;
         this.adjacentMines = other.adjacentMines;
     }

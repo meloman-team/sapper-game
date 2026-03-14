@@ -14,8 +14,8 @@ import ru.catr.game.sapper.service.newgame.NewGameService;
 @AllArgsConstructor
 public class NewApiDelegateImpl implements NewApiDelegate {
 
-    private NewGameRequestValidator validator;
-    private NewGameService service;
+    private final NewGameRequestValidator validator;
+    private final NewGameService service;
 
     @Override
     public ResponseEntity<GameInfoResponse> newPost(NewGameRequest newGameRequest) {
