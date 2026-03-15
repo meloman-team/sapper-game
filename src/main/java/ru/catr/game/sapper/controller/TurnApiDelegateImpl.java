@@ -21,6 +21,7 @@ public class TurnApiDelegateImpl implements TurnApiDelegate {
     public ResponseEntity<GameInfoResponse> turnPost(GameTurnRequest gameTurnRequest) {
         validator.validateRequest(gameTurnRequest); // TODO можно переделать на автоматическую валидацию через аннотации в dto
         GameInfoResponse response = service.turn(gameTurnRequest);
+        // TODO добавить валидатор на ответ для исключения ошибок при изменении логики? т.к. есть прямые требования.
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
