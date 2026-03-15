@@ -56,6 +56,11 @@ public class TurnGameService {
      */
     private boolean openCell(@NotNull List<List<CellState>> internalStateField, int row, int col) {
         CellState cell = internalStateField.get(row).get(col);
+
+        if(cell.isOpened()) {
+            throw new IllegalArgumentException("Нельзя открыть уже открытую ячейку");
+        }
+
         if (cell.isMined()) {
             cell.setOpened(true);
             return true;
