@@ -15,7 +15,7 @@ game:
   # конфиг валидации игрового поля
   validate:
     # минимальное количество мин
-    min-mines-count: 0 # TODO Уточнить требования по минимальному количеству мин.
+    min-mines-count: 1
     # минимальная высота поля
     min-height: 2
     # максимальная высота поля
@@ -27,8 +27,4 @@ game:
 
 springdoc:
   swagger-ui:
-    # Путь к вашему файлу относительно папки static/public
-    # Положите api.yml в src/main/resources/static/api.yml
     url: /api.yml
-#  api-docs:
-#    enabled: true
