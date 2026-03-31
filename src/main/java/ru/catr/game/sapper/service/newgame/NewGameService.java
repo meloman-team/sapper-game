@@ -2,6 +2,7 @@ package ru.catr.game.sapper.service.newgame;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import org.springframework.stereotype.Service;
 import ru.catr.game.sapper.model.CellState;
 import ru.catr.game.sapper.model.GameInfo;
@@ -63,60 +64,88 @@ public class NewGameService {
      * Генерация внутреннего состояния поля
      */
     private List<List<CellState>> generateInternalField(NewGameRequest newGameRequest) {
-        var height = newGameRequest.getHeight();
-        var width = newGameRequest.getWidth();
-        var minesCount = newGameRequest.getMinesCount();
-
-        List<List<CellState>> internalState = IntStream.range(0, height)
-                .mapToObj(i -> IntStream.range(0, width)
-                        .mapToObj(j -> new CellState())
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
-
-        placeMines(internalState, width, height, minesCount);
-        calculateAdjacentMines(internalState, width, height);
+        FillContext fillContext = mapToFillContext(newGameRequest);
+        List<List<CellState>> internalState = placeMines(fillContext);
+        calculateAdjacentMines(internalState, fillContext.width, fillContext.height);
 
         return internalState;
     }
 
     /**
+     * Заполняет поле минами, либо пустыми значениями в зависимости от стратегии
+     */
+    private List<List<CellState>> initField(FillContext fillContext) {
+        return IntStream.range(0, fillContext.height)
+                .mapToObj(i -> IntStream.range(0, fillContext.width)
+                        .mapToObj(j -> {
+                            boolean mined = switch (fillContext.strategy) {
+                                case Strategy.MINING -> false;
+                                case Strategy.DEMINING -> true;
+                            };
+                            return CellState.builder().mined(mined).build();
+                        })
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
+    }
+
+    private FillContext mapToFillContext(NewGameRequest request) {
+        var height = request.getHeight();
+        var width = request.getWidth();
+        var minesCount = request.getMinesCount();
+        var totalCells = width * height;
+        return FillContext.builder()
+                .height(height)
+                .width(width)
+                .minesCount(minesCount)
+                .totalCells(totalCells)
+                .strategy(getStrategy(request.getMinesCount(), totalCells))
+                .build();
+    }
+
+    /**
+     * Выбираем стратегию заполнения поля в зависимости от количества мин и размера поля.
+     * Если мин больше половины — выгоднее выбрать заполнение всего поля минами и генерировать пустые ячейки
+     */
+    private Strategy getStrategy(int minesCount, int totalCells) {
+        return minesCount > totalCells / 2 ? Strategy.DEMINING : Strategy.MINING;
+    }
+
+    /**
      * Случайное размещение мин на поле
      */
-    private void placeMines(List<List<CellState>> field, int width, int height, int minesCount) {
-        int totalCells = width * height;
-
-        // Если мин больше половины — выгоднее выбрать безопасные ячейки
-        if (minesCount > totalCells / 2) {
-            Set<Integer> safeIdx = new HashSet<>();
-            int safeCount = totalCells - minesCount;
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-
-            while (safeIdx.size() < safeCount) {
-                safeIdx.add(random.nextInt(totalCells));
+    private List<List<CellState>> placeMines(FillContext fillContext) {
+        List<List<CellState>> field = initField(fillContext);
+        switch (fillContext.strategy) {
+            case DEMINING -> {
+                int safeCount = fillContext.totalCells - fillContext.minesCount;
+                fillingField(field, fillContext.width, safeCount, fillContext.totalCells, false);
             }
+            case MINING -> fillingField(field, fillContext.width, fillContext.minesCount, fillContext.totalCells, true);
+        }
+        return field;
+    }
 
-            // Все ячейки — мины, кроме safeIdx
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    int index = i * width + j;
-                    if (!safeIdx.contains(index)) {
-                        field.get(i).get(j).setMined(true);
-                    }
-                }
-            }
-        } else {
-            Set<Integer> mineIdx = new HashSet<>();
-            ThreadLocalRandom random = ThreadLocalRandom.current();
+    /**
+     * Случайное размещение мин на поле
+     *
+     * @param field      - игровое поле которое нужно заполнить
+     * @param width      - ширина поля
+     * @param cellCount  - количество ячеек для заполнения
+     * @param totalCells - общее количество ячеек на поле
+     * @param mined      true - заполняем минами, false - заполняем пустыми ячейками
+     */
+    private static void fillingField(List<List<CellState>> field, int width, int cellCount, int totalCells, boolean mined) {
+        Set<Integer> fillIdx = new HashSet<>();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-            while (mineIdx.size() < minesCount) {
-                mineIdx.add(random.nextInt(totalCells));
-            }
+        while (fillIdx.size() < cellCount) {
+            fillIdx.add(random.nextInt(totalCells));
+        }
 
-            for (int index : mineIdx) {
-                int row = index / width;
-                int col = index % width;
-                field.get(row).get(col).setMined(true);
-            }
+        for (int index : fillIdx) {
+            int row = index / width;
+            int col = index % width;
+            field.get(row).get(col).setMined(mined);
         }
     }
 
@@ -146,6 +175,23 @@ public class NewGameService {
                 cell.setAdjacentMines(count);
             }
         }
+    }
+
+    /**
+     * Контекст для заполнения поля, пред расчётные значения и выбранная стратегия.
+     */
+    @Builder
+    static class FillContext {
+        int height;
+        int width;
+        int minesCount;
+        int totalCells;
+        Strategy strategy;
+    }
+
+    enum Strategy {
+        MINING, // минируем (генерируем мины)
+        DEMINING // разминируем (генерируем пустые ячейки)
     }
 
 }
